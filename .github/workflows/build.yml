@@ -1,0 +1,47 @@
+name: Build IoskeleyMono
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Install ttfautohint
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ttfautohint
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build fonts
+        run: |
+          npm run build -- ttc::IoskeleyMono contents::IoskeleyMono
+          npm run build -- ttc::IoskeleyMonoTerm contents::IoskeleyMonoTerm
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: IoskeleyMono
+          path: |
+            dist/.ttc/Ioskeley*/
+            dist/Ioskeley*/
+
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/.ttc/Ioskeley*/**/*
+            dist/Ioskeley*/**/*
